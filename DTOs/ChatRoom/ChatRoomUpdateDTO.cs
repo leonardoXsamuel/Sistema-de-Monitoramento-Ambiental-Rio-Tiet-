@@ -1,13 +1,13 @@
 ﻿using ApsMartChat.DTOs.ChatRoom;
 using ApsMartChat.DTOs.FileTransfer;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApsMartChat.DTOs.ChatRoom;
 
-public record ChatRoomUpdateDTO
-{
-    public string Name { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+public record ChatRoomUpdateDTO(
 
-    public ICollection<MessageCreateDTO> Messages { get; set; } = new List<MessageCreateDTO>();
-    public ICollection<FileTransferCreateDTO> FileTransfers { get; set; } = new List<FileTransferCreateDTO>();
-}
+    [Required]
+    [StringLength(155, MinimumLength = 4)]
+    string Name
+
+);

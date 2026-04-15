@@ -1,4 +1,5 @@
 ﻿using ApsMartChat.DTOs.FileTransfer;
+using ApsMartChat.DTOs.Message;
 
 namespace ApsMartChat.DTOs.ChatRoom;
 
@@ -6,6 +7,6 @@ public record ChatRoomResponseDTO(
     string Name,
     DateTime CreatedAt,
 
-    ICollection<MessageCreateDTO> Messages,
-    ICollection<FileTransferCreateDTO> FileTransfers
+    ICollection<MessageResponseDTO> Messages,
+    ICollection<FileTransferResponseDTO> FileTransfers
 );
