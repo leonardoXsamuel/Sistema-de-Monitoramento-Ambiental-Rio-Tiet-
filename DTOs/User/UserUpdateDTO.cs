@@ -1,6 +1,12 @@
-﻿namespace ApsMartChat.DTOs.User;
+﻿using System.ComponentModel.DataAnnotations;
 
-public record UserUpdateDTO
-{
+namespace ApsMartChat.DTOs.User;
 
-}
+public record UserUpdateDTO(
+
+    [StringLength(100, MinimumLength = 3)]
+    string? Username,
+
+    [StringLength(100, MinimumLength = 3)]
+    string? DisplayName
+);

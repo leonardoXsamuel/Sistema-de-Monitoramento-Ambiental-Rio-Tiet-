@@ -1,3 +1,11 @@
-﻿namespace ApsMartChat.DTOs.User;
+﻿using ApsMartChat.DTOs.FileTransfer;
+using ApsMartChat.DTOs.Message;
 
-public record UserResponseDTO();
+namespace ApsMartChat.DTOs.User;
+
+public record UserResponseDTO(
+    string Username,
+    string DisplayName,
+    string Role,
+    DateTime CreatedAt
+);
