@@ -1,3 +1,11 @@
-﻿namespace ApsMartChat.DTOs.Message;
+﻿using ApsMartChat.DTOs.ChatRoom;
+using ApsMartChat.DTOs.User;
 
-public record MessageResponseDTO();
+namespace ApsMartChat.DTOs.Message;
+
+public record MessageResponseDTO (
+    string Content,
+    DateTime SentAt,
+    UserResponseDTO Sender,
+    ChatRoomResponseDTO Room
+);
