@@ -1,6 +1,6 @@
-﻿namespace ApsMartChat.DTOs.FileTransfer;
+﻿using ApsMartChat.DTOs.ChatRoom;
+using ApsMartChat.DTOs.User;
 
-public record FileTransferUpdateDTO
-{
+namespace ApsMartChat.DTOs;
 
-}
+public record FileTransferUpdateDTO(string? NomeOriginal);

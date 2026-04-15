@@ -1,3 +1,13 @@
-﻿namespace ApsMartChat.DTOs.FileTransfer;
+﻿using ApsMartChat.DTOs.ChatRoom;
+using ApsMartChat.DTOs.User;
 
-public record FileTransferResponseDTO();
+namespace ApsMartChat.DTOs.FileTransfer;
+
+public record FileTransferResponseDTO(
+    string NomeOriginal,
+    string TipoConteudo,
+    long TamanhoBytes,
+    DateTime UploadedAt,
+    UserResponseDTO Uploader,
+    ChatRoomResponseDTO Room
+);
