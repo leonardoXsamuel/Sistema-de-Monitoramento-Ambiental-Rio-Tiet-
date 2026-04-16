@@ -10,10 +10,13 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─── Banco de dados SQLite ───────────────────────────────────────────────────
+// Banco de dados SQLite 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=envirochat.db"));
+
+// MAPPERS
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // ─── JWT ─────────────────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "CHAVE_SECRETA_MINIMO_32_CARACTERES_AQUI!";
