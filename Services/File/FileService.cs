@@ -1,5 +1,8 @@
 using ApsMartChat.DTOs;
+using ApsMartChat.DTOs.FileTransfer;
 using ApsMartChat.Models;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using EnviroChat.API.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +11,17 @@ namespace ApsMartChat.Services.File;
 public class FileService : IFileService
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
     private readonly IWebHostEnvironment _env;
 
-    private static readonly HashSet<string> TiposArquivosPermitidos = new (StringComparer.OrdinalIgnoreCase)
+    public FileService(AppDbContext db, IWebHostEnvironment env, IMapper mapper)
+    {
+        _db = db;
+        _env = env;
+        _mapper = mapper;
+    }
+
+    private static readonly HashSet<string> TiposArquivosPermitidos = new(StringComparer.OrdinalIgnoreCase)
     {
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -22,79 +33,99 @@ public class FileService : IFileService
         ".pdf", ".docx", ".xlsx"
     };
 
-    private const long TamanhoMaxArqBytes = 50 * 1024 * 1024; // 50 MB
-
-    public FileService(AppDbContext db, IWebHostEnvironment env)
+    // os primeiros bytes do arquivo que identificam o tipo real do arquivo => magic bytes
+    private static readonly Dictionary<string, byte[]> MagicBytes = new()
     {
-        _db  = db;
-        _env = env;
+        { ".pdf",  new byte[]{0x25, 0x50, 0x44, 0x46}},
+        { ".docx", new byte[]{0x50, 0x4B, 0x03, 0x04}},
+        { ".xlsx", new byte[]{0x50, 0x4B, 0x03, 0x04}},
+    };
+
+    private const long TamanhoMaxArqBytes = 200 * 1024 * 1024; // 200 MB
+
+    private static async Task<bool> ValidarBytesIniciaisAsync(IFormFile file, string ext)
+    {
+        if (!MagicBytes.TryGetValue(ext, out var assinatura))
+            return false;
+
+        // lê só os primeiros bytes, sem carregar o arquivo inteiro
+        var buffer = new byte[assinatura.Length];
+        await using var stream = file.OpenReadStream();
+        var lidos = await stream.ReadAsync(buffer, 0, buffer.Length);
+
+        if (lidos < assinatura.Length)
+            return false;
+
+        return buffer.SequenceEqual(assinatura);
     }
 
-    public async Task<FileTransferDto> UploadAsync(
-        IFormFile file, string username, int roomId, string baseUrl)
+    public async Task<FileTransferResponseDTO> UploadDeArquivoAsync(IFormFile file, string username, int roomId, string baseUrl)
     {
-        // ── Validações ───────────────────────────────────────────────────────
         if (file.Length > TamanhoMaxArqBytes)
-            throw new InvalidOperationException("Arquivo excede 50 MB.");
+            throw new InvalidOperationException("Arquivo excede 200 MB.");
 
         var ext = Path.GetExtension(file.FileName);
         if (!ExtensoesArquivosPermitidas.Contains(ext))
             throw new InvalidOperationException("Tipo de arquivo não permitido. Use .pdf, .docx ou .xlsx.");
 
-        // ── Salvar no disco ──────────────────────────────────────────────────
+        if (!await ValidarBytesIniciaisAsync(file, ext))
+            throw new InvalidOperationException("O conteúdo do arquivo não corresponde à extensão informada.");
+
+        // Salva no disco
         var uploadsPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads");
         Directory.CreateDirectory(uploadsPath);
 
         var storedName = $"{Guid.NewGuid()}{ext}";
-        var fullPath   = Path.Combine(uploadsPath, storedName);
+        var fullPath = Path.Combine(uploadsPath, storedName);
 
         await using var stream = new FileStream(fullPath, FileMode.Create);
         await file.CopyToAsync(stream);
 
-        // ── Salvar metadados no banco ────────────────────────────────────────
-        var user = await _db.Users.FirstAsync(u => u.Username == username);
+        // Salva no banco 
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username)
+            ?? throw new Exception("Usuário não localizado.");
 
         var transfer = new FileTransfer
         {
-            OriginalName = file.FileName,
-            StoredName   = storedName,
-            ContentType  = file.ContentType,
-            SizeBytes    = file.Length,
-            UploaderId   = user.Id,
-            RoomId       = roomId
+            NomeOriginal = file.FileName,
+            NomeGeradoCript = storedName,
+            TipoConteudo = file.ContentType,
+            TamanhoBytes = file.Length,
+            UploaderId = user.Id,
+            RoomId = roomId
         };
 
         _db.FileTransfers.Add(transfer);
         await _db.SaveChangesAsync();
 
-        return ToDto(transfer, user.DisplayName, baseUrl);
+        var dto = _mapper.Map<FileTransferResponseDTO>(transfer);
+
+        return dto;
     }
 
-    public async Task<(Stream stream, string contentType, string fileName)?> DownloadAsync(int fileId)
+    public async Task<(Stream stream, string contentType, string fileName)?> DownloadDeArquivoAsync(int fileId)
     {
         var transfer = await _db.FileTransfers.FindAsync(fileId);
-        if (transfer is null) return null;
 
-        var path = Path.Combine(
-            _env.WebRootPath ?? "wwwroot", "uploads", transfer.StoredName);
+        if (transfer is null)
+            throw new Exception(); // criar exceções customizadas => NotFoundException para esse caso
 
-        if (!File.Exists(path)) return null;
+        var path = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", transfer.NomeGeradoCript);
 
-        var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-        return (stream, transfer.ContentType, transfer.OriginalName);
+        if (!System.IO.File.Exists(path))
+            throw new Exception();
+
+        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read); // FileMode.Open pode dar erro e precisa ser tratado => pesquisar formas
+        return (stream, transfer.TipoConteudo, transfer.NomeOriginal);
     }
 
-    public async Task<List<FileTransferDto>> GetByRoomAsync(int roomId, string baseUrl)
+    public async Task<List<FileTransferResponseDTO>> GetFilesByRoomAsync(int roomId)
     {
         return await _db.FileTransfers
             .Include(f => f.Uploader)
             .Where(f => f.RoomId == roomId)
             .OrderByDescending(f => f.UploadedAt)
-            .Select(f => ToDto(f, f.Uploader.DisplayName, baseUrl))
+            .ProjectTo<FileTransferResponseDTO>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
-
-    private static FileTransferDto ToDto(FileTransfer f, string displayName, string baseUrl) =>
-        new(f.Id, f.OriginalName, f.ContentType, f.SizeBytes, f.UploadedAt,
-            displayName, $"{baseUrl}/api/files/{f.Id}/download");
 }
