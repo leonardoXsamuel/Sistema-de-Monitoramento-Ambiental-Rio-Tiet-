@@ -11,7 +11,9 @@ public class FileTransferProfile : Profile
     {
         CreateMap<FileTransferCreateDTO, FileTransfer>();
         CreateMap<FileTransferUpdateDTO, FileTransfer>();
-        CreateMap<FileTransfer, FileTransferResponseDTO>();
+        CreateMap<FileTransfer, FileTransferResponseDTO>()
+            .ForMember(dest => dest.DownloadUrl,
+                opt => opt.MapFrom(src => $"/api/files/{src.Id}/download"));
     }
 
 }
