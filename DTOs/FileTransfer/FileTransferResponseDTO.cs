@@ -8,6 +8,7 @@ public record FileTransferResponseDTO(
     string TipoConteudo,
     long TamanhoBytes,
     DateTime UploadedAt,
+    string DownloadUrl,
     UserResponseDTO Uploader,
     ChatRoomResponseDTO Room
 );
