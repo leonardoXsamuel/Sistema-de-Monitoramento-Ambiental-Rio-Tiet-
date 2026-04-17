@@ -1,72 +1,85 @@
 using ApsMartChat.DTOs;
+using ApsMartChat.DTOs.FileTransfer;
 using ApsMartChat.Services.Message;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace EnviroChat.API.Hubs;
 
-/// <summary>
-/// Hub SignalR — implementa os sockets de Berkeley indiretamente via TCP/IP.
-/// O SignalR usa WebSockets (que encapsula TCP) como transporte preferencial,
-/// caindo para Server-Sent Events ou Long Polling como fallback.
-/// </summary>
 [Authorize]
 public class ChatHub : Hub
 {
     private readonly IMessageService _messageService;
+    private readonly ILogger<ChatHub> _logger;
 
-    public ChatHub(IMessageService messageService)
+    public ChatHub(IMessageService messageService, ILogger<ChatHub> logger)
     {
         _messageService = messageService;
+        _logger = logger;
     }
 
-    // ── Entrar em uma sala ────────────────────────────────────────────────────
-    public async Task JoinRoom(int roomId)
+    // padroniza o nome do grupo
+    private static string RoomGroup(int roomId) => $"room_{roomId}";
+
+    //  Entrar em uma sala 
+    public async Task EntrarNoChatRoom(int roomId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(roomId));
         await Clients.Group(RoomGroup(roomId))
-            .SendAsync("UserJoined", Context.User!.Identity!.Name, roomId);
+            .SendAsync("UsuarioEntrou", $"Usuario{Context.User?.Identity?.Name ?? "Anônimo"} entrou na sala {roomId}");
     }
 
-    // ── Sair de uma sala ──────────────────────────────────────────────────────
-    public async Task LeaveRoom(int roomId)
+    //  Sair de uma sala 
+    public async Task SairDoChatRoom(int roomId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, RoomGroup(roomId));
         await Clients.Group(RoomGroup(roomId))
-            .SendAsync("UserLeft", Context.User!.Identity!.Name, roomId);
+            .SendAsync("UsuarioSaiu", $"Usuario{Context.User?.Identity?.Name ?? "Anônimo"} saiu da sala {roomId}");
     }
 
-    // ── Enviar mensagem ───────────────────────────────────────────────────────
-    public async Task SendMessage(string content, int roomId)
+    //  Enviar mensagem 
+    public async Task EnviarMensagem(string content, int roomId)
     {
         var username = Context.User!.Identity!.Name!;
-        var msg = await _messageService.SaveAsync(content, username, roomId);
+        var msg = await _messageService.SaveMessageAsync(content, username, roomId);
 
-        // Broadcast para todos na sala (incluindo o remetente)
+        // Enviando a msg para todos na sala (incluindo o remetente)
         await Clients.Group(RoomGroup(roomId))
-            .SendAsync("ReceiveMessage", msg);
+            .SendAsync("ReceberMensagem", msg);
     }
 
-    // ── Notificar novo arquivo disponível ────────────────────────────────────
-    public async Task NotifyFileUploaded(FileTransferDto file, int roomId)
+    //  Notificar novo arquivo disponível 
+    public async Task NotificaçãoDeArquivoCarregado(FileTransferResponseDTO file, int roomId)
     {
         await Clients.Group(RoomGroup(roomId))
-            .SendAsync("FileAvailable", file);
+            .SendAsync("ArquivoDisponível", file);
     }
 
-    // ── Indicador de digitação ────────────────────────────────────────────────
-    public async Task Typing(int roomId, bool isTyping)
+    //  Indicador de digitação 
+    public async Task Digitando(int roomId, bool isTyping)
     {
         var username = Context.User!.Identity!.Name;
         await Clients.OthersInGroup(RoomGroup(roomId))
-            .SendAsync("UserTyping", username, isTyping);
+            .SendAsync("UsuárioDigitando", $"Usuario{username ?? "Anônimo"} está digitando", isTyping);
     }
 
-    // ── Desconexão ────────────────────────────────────────────────────────────
+    //  Desconexão da sala
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        var username = Context.User?.Identity?.Name ?? "Anonimo";
+
+        if (exception is null)
+        {
+            _logger.LogInformation("Usuário {Username} se desconectou", username);
+        }
+        else
+        {
+            // opcional: log de erro
+            _logger.LogError(exception, "Erro na desconexão do usuário {Username}", username);
+        }
+
         await base.OnDisconnectedAsync(exception);
     }
 
-    private static string RoomGroup(int roomId) => $"room_{roomId}";
 }
