@@ -15,10 +15,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=envirochat.db"));
 
-// MAPPERS
+// Mappers
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// ─── JWT ─────────────────────────────────────────────────────────────────────
+//   JWT   
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "CHAVE_SECRETA_MINIMO_32_CARACTERES_AQUI!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -45,15 +45,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// ─── Services ────────────────────────────────────────────────────────────────
+//   Services  
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 
-// ─── SignalR ─────────────────────────────────────────────────────────────────
+//   SignalR  
 builder.Services.AddSignalR();
 
-// ─── CORS (libera React dev server) ──────────────────────────────────────────
+//   CORS (libera React dev server)               
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
@@ -69,14 +69,14 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ─── Migrations automáticas na inicialização ─────────────────────────────────
+//   Migrations automáticas na inicialização            
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
 
-// ─── Pipeline ────────────────────────────────────────────────────────────────
+//   Pipeline  
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

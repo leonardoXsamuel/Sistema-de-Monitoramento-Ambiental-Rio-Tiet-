@@ -1,4 +1,5 @@
-﻿using EnviroChat.API.Models;
+﻿using ApsMartChat.Services.File;
+using EnviroChat.API.Models;
 using EnviroChat.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,13 +11,13 @@ namespace ApsMartChat.Controllers;
 [Route("api/files")]
 public class FilesController : ControllerBase
 {
-    private readonly IFileService _files;
+    private readonly FileService _files;
 
-    public FilesController(IFileService files) => _files = files;
+    public FilesController(FileService files) => _files = files;
 
-    /// <summary>Upload de arquivo para uma sala. Aceita .pdf, .docx, .xlsx (max 50 MB).</summary>
+    ///Upload de arquivo para uma sala. Aceita .pdf, .docx, .xlsx (max 200 MB).
     [HttpPost("upload")]
-    [RequestSizeLimit(52_428_800)] // 50 MB
+    [RequestSizeLimit(52_428_800)] // 200 MB => ajustar anotacao pra receber 200MB ao invés de 50MB
     public async Task<IActionResult> Upload(
         IFormFile file,
         [FromForm] int roomId)
@@ -25,7 +26,7 @@ public class FilesController : ControllerBase
         {
             var username = User.Identity!.Name!;
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var dto = await _files.UploadAsync(file, username, roomId, baseUrl);
+            var dto = await _files.UploadDeArquivoAsync(file, username, roomId, baseUrl);
             return Ok(dto);
         }
         catch (InvalidOperationException ex)
@@ -34,11 +35,11 @@ public class FilesController : ControllerBase
         }
     }
 
-    /// <summary>Download de um arquivo pelo ID.</summary>
+    /// Download de um arquivo pelo ID.
     [HttpGet("{id:int}/download")]
     public async Task<IActionResult> Download(int id)
     {
-        var result = await _files.DownloadAsync(id);
+        var result = await _files.DownloadDeArquivoAsync(id);
         if (result is null)
             return NotFound(new { message = "Arquivo não encontrado." });
 
@@ -46,12 +47,12 @@ public class FilesController : ControllerBase
         return File(stream, contentType, fileName);
     }
 
-    /// <summary>Lista arquivos de uma sala.</summary>
+    /// Lista arquivos de uma sala.
     [HttpGet("room/{roomId:int}")]
     public async Task<IActionResult> GetByRoom(int roomId)
     {
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        var files = await _files.GetByRoomAsync(roomId, baseUrl);
+        //var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var files = await _files.GetFilesByRoomAsync(roomId);
         return Ok(files);
     }
 }

@@ -1,4 +1,5 @@
 using ApsMartChat.DTOs;
+using ApsMartChat.Models;
 using EnviroChat.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,20 +9,14 @@ using System.Text;
 
 namespace ApsMartChat.Services.Auth;
 
-public interface IAuthService
-{
-    Task<AuthResponse?> RegisterAsync(RegisterRequest request);
-    Task<AuthResponse?> LoginAsync(LoginRequest request);
-}
-
 public class AuthService : IAuthService
 {
-    private readonly AppDbContext  _db;
+    private readonly AppDbContext _db;
     private readonly IConfiguration _config;
 
     public AuthService(AppDbContext db, IConfiguration config)
     {
-        _db     = db;
+        _db = db;
         _config = config;
     }
 
@@ -33,10 +28,10 @@ public class AuthService : IAuthService
 
         var user = new User
         {
-            Username     = req.Username,
+            Username = req.Username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-            DisplayName  = req.DisplayName,
-            Role         = req.Role
+            DisplayName = req.DisplayName,
+            Role = req.Role
         };
 
         _db.Users.Add(user);
@@ -66,10 +61,10 @@ public class AuthService : IAuthService
         );
     }
 
-    // ─── Gera JWT com claims do usuário ───────────────────────────────────────
+    //  Gera JWT com claims do usuário 
     private string GenerateToken(User user)
     {
-        var key   = new SymmetricSecurityKey(
+        var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -77,13 +72,13 @@ public class AuthService : IAuthService
         {
             new Claim(ClaimTypes.Name,           user.Username),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Role,           user.Role),
+            new Claim(ClaimTypes.Role,          user.Role),
             new Claim("displayName",             user.DisplayName)
         };
 
         var token = new JwtSecurityToken(
-            claims:   claims,
-            expires:  DateTime.UtcNow.AddHours(8),
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(8),
             signingCredentials: creds
         );
 

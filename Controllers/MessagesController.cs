@@ -13,11 +13,11 @@ public class MessagesController : ControllerBase
 
     public MessagesController(IMessageService messages) => _messages = messages;
 
-    /// <summary>Retorna histórico paginado de mensagens de uma sala.</summary>
+    /// Retorna histórico paginado de mensagens de uma sala.
     [HttpGet]
     public async Task<IActionResult> GetHistory(int roomId, [FromQuery] int page = 1)
     {
-        var history = await _messages.GetHistoryAsync(roomId, page);
+        var history = await _messages.GetHistoryOfMessagesAsync(roomId, page);
         return Ok(history);
     }
 }
