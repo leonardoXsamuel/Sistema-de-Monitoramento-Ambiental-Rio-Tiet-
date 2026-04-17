@@ -1,4 +1,5 @@
-using ApsMartChat.DTOs;
+
+using ApsMartChat.DTOs.Auth;
 using ApsMartChat.Models;
 using EnviroChat.API.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,16 +21,16 @@ public class AuthService : IAuthService
         _config = config;
     }
 
-    public async Task<AuthResponse?> RegisterAsync(RegisterRequest req)
+    public async Task<AuthResponse?> RegistrarUsuarioAsync(RegisterRequest req)
     {
         // Verifica se username já existe
         if (await _db.Users.AnyAsync(u => u.Username == req.Username))
-            return null;
+            throw new Exception();
 
         var user = new User
         {
             Username = req.Username,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password), // linha em que a senha é criptografada
             DisplayName = req.DisplayName,
             Role = req.Role
         };
@@ -45,13 +46,13 @@ public class AuthService : IAuthService
         );
     }
 
-    public async Task<AuthResponse?> LoginAsync(LoginRequest req)
+    public async Task<AuthResponse?> LoginDeUsuarioAsync(LoginRequest req)
     {
         var user = await _db.Users
             .FirstOrDefaultAsync(u => u.Username == req.Username);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-            return null;
+            throw new Exception("Senha errada."); // => criar exception personalizada para esse case
 
         return new AuthResponse(
             GenerateToken(user),
@@ -61,7 +62,7 @@ public class AuthService : IAuthService
         );
     }
 
-    //  Gera JWT com claims do usuário 
+    //  Gera JWT com infos do usuário 
     private string GenerateToken(User user)
     {
         var key = new SymmetricSecurityKey(
@@ -70,10 +71,10 @@ public class AuthService : IAuthService
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.Name,           user.Username),
+            new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Role,          user.Role),
-            new Claim("displayName",             user.DisplayName)
+            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim("displayName", user.DisplayName)
         };
 
         var token = new JwtSecurityToken(
