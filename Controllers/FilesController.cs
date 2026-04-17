@@ -1,6 +1,4 @@
 ﻿using ApsMartChat.Services.File;
-using EnviroChat.API.Models;
-using EnviroChat.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,16 +13,14 @@ public class FilesController : ControllerBase
 
     public FilesController(FileService files) => _files = files;
 
-    ///Upload de arquivo para uma sala. Aceita .pdf, .docx, .xlsx (max 200 MB).
+    // Upload de arquivo para uma sala. Aceita .pdf, .docx, .xlsx (max 200 MB).
     [HttpPost("upload")]
-    [RequestSizeLimit(52_428_800)] // 200 MB => ajustar anotacao pra receber 200MB ao invés de 50MB
-    public async Task<IActionResult> Upload(
-        IFormFile file,
-        [FromForm] int roomId)
+    [RequestSizeLimit(209_715_200)] // 200 MB
+    public async Task<IActionResult> Upload(IFormFile file, [FromForm] int roomId)
     {
         try
         {
-            var username = User.Identity!.Name!;
+            var username = User.Identity?.Name ?? "Anonimo";
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var dto = await _files.UploadDeArquivoAsync(file, username, roomId, baseUrl);
             return Ok(dto);
@@ -35,23 +31,30 @@ public class FilesController : ControllerBase
         }
     }
 
-    /// Download de um arquivo pelo ID.
+    // Download de um arquivo pelo ID.
     [HttpGet("{id:int}/download")]
     public async Task<IActionResult> Download(int id)
     {
-        var result = await _files.DownloadDeArquivoAsync(id);
-        if (result is null)
-            return NotFound(new { message = "Arquivo não encontrado." });
+        try
+        {
+            var result = await _files.DownloadDeArquivoAsync(id);
 
-        var (stream, contentType, fileName) = result;
-        return File(stream, contentType, fileName);
+            var stream = result.stream;
+            var TipoConteudo = result.contentType;
+            var fileName = result.fileName;
+
+            return File(stream, TipoConteudo, fileName);
+        }
+        catch (Exception)
+        {
+            return NotFound(new { message = "Arquivo não encontrado." });
+        }
     }
 
-    /// Lista arquivos de uma sala.
+    // Lista arquivos de uma sala.
     [HttpGet("room/{roomId:int}")]
-    public async Task<IActionResult> GetByRoom(int roomId)
+    public async Task<IActionResult> GetFilesByRoomAsync(int roomId)
     {
-        //var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var files = await _files.GetFilesByRoomAsync(roomId);
         return Ok(files);
     }

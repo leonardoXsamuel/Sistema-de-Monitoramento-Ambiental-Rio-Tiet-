@@ -103,7 +103,7 @@ public class FileService : IFileService
         return dto;
     }
 
-    public async Task<(Stream stream, string contentType, string fileName)?> DownloadDeArquivoAsync(int fileId)
+    public async Task<(Stream stream, string contentType, string fileName)> DownloadDeArquivoAsync(int fileId)
     {
         var transfer = await _db.FileTransfers.FindAsync(fileId);
 
