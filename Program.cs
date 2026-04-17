@@ -19,7 +19,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 //   JWT   
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "CHAVE_SECRETA_MINIMO_32_CARACTERES_AQUI!";
+var jwtKey = builder.Configuration["Jwt:Key"];
+
+if (string.IsNullOrEmpty(jwtKey))
+    throw new Exception("JWT Key não configurada"); // configurar no appsettings.Development.json (local)
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
