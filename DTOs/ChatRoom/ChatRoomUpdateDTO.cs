@@ -1,9 +1,8 @@
-﻿using ApsMartChat.DTOs.ChatRoom;
-using ApsMartChat.DTOs.FileTransfer;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ApsMartChat.DTOs.ChatRoom;
 
+// deletar
 public record ChatRoomUpdateDTO(
 
     [Required]
