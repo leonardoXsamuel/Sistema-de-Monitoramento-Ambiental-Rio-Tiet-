@@ -1,5 +1,4 @@
-﻿using ApsMartChat.DTOs;
-using ApsMartChat.DTOs.Auth;
+﻿using ApsMartChat.DTOs.Auth;
 using ApsMartChat.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
