@@ -2,4 +2,4 @@
 
 namespace ApsMartChat.DTOs.FileTransfer;
 
-public record FileTransferUpdateDTO([Required] [StringLength(55), MinLength(1)] string NomeOriginal);
+public record FileTransferUpdateDTO([Required] [StringLength(55, MinimumLength = 1)] string NomeOriginal);

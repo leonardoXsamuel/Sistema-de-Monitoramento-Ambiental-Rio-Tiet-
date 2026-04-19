@@ -6,7 +6,7 @@ namespace ApsMartChat.DTOs.FileTransfer;
 public record FileTransferCreateDTO
 {
     [Required]
-    [StringLength(55), MinLength(1)]
+    [StringLength(55, MinimumLength = 1)]
     public string NomeOriginal { get; set; } = string.Empty;  // nome original
     
     public string NomeGeradoCript { get; set; } = string.Empty;  // nome q vai ser criado no FileService 

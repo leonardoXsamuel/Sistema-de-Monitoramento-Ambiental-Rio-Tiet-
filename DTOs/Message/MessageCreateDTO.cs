@@ -5,13 +5,13 @@ namespace ApsMartChat.DTOs.User;
 
 public record MessageCreateDTO(
     [Required]
-    [MinLength(1)]
-    [StringLength(1000)]
+    [StringLength(400, MinimumLength = 1)]
     string Content,
 
     [Required]
     UserCreateDTO Sender,
 
+    [Required]
     ChatRoomCreateDTO Room
 );
     

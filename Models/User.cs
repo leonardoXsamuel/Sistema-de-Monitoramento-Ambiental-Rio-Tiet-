@@ -18,6 +18,6 @@ public class User
     public string PasswordHash { get; set; } = null!;
     public UserRole Role { get; set; } = UserRole.Inspetor; // inspetor | coordenador
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public ICollection<Message> Messages { get; set; } = new List<Message>();
-    public ICollection<FileTransfer> FileTransfers { get; set; } = new List<FileTransfer>();
+    public ICollection<Message> Messages { get; set; } = [];
+    public ICollection<FileTransfer> FileTransfers { get; set; } = [];
 }
