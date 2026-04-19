@@ -1,17 +1,12 @@
-﻿using ApsMartChat.DTOs.FileTransfer;
-using ApsMartChat.DTOs.User;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace ApsMartChat.DTOs.ChatRoom;
+namespace ApsMartChat.DTOs.User;
 
 public record UserCreateDTO
-{
-    [Required]
-    [StringLength(100, MinimumLength = 3)]
-    public string Username { get; set; }
+(
+    [Required, StringLength(100, MinimumLength = 3)]
+    string Username,
 
-    [Required]
-    [StringLength(100, MinimumLength = 3)]
-    public string DisplayName { get; set; } 
-
-}
+    [Required, StringLength(100, MinimumLength = 3)]
+    string DisplayName
+);

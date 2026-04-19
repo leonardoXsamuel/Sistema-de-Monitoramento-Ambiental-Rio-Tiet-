@@ -1,4 +1,5 @@
 ﻿using ApsMartChat.DTOs.ChatRoom;
+using ApsMartChat.DTOs.User;
 using System.ComponentModel.DataAnnotations;
 
 namespace ApsMartChat.DTOs.FileTransfer;
