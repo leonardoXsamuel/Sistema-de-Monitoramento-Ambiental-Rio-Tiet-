@@ -14,6 +14,10 @@ appsettings.Development.json
 .DS_Store
 Thumbs.db
 
+martchat.db-shm
+martchat.db-wal
+martchatDB.sqbpro
+
 *.db
 
 .env
