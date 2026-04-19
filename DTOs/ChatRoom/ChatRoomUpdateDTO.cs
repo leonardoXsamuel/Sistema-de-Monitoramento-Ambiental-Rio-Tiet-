@@ -2,7 +2,6 @@
 
 namespace ApsMartChat.DTOs.ChatRoom;
 
-// deletar
 public record ChatRoomUpdateDTO(
 
     [Required]
