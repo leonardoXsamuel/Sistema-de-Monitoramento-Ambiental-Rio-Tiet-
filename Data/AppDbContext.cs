@@ -1,8 +1,7 @@
 using ApsMartChat.Models;
-using EnviroChat.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace EnviroChat.API.Data;
+namespace ApsMartChat.Data;
 
 public class AppDbContext : DbContext
 {
