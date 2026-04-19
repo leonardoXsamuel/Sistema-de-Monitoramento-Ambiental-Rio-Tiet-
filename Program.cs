@@ -1,7 +1,7 @@
+using ApsMartChat.Data;
 using ApsMartChat.Services.Auth;
 using ApsMartChat.Services.File;
 using ApsMartChat.Services.Message;
-using EnviroChat.API.Data;
 using EnviroChat.API.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,6 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 //   JWT   
 var jwtKey = builder.Configuration["Jwt:Key"];
-
 if (string.IsNullOrEmpty(jwtKey))
     throw new Exception("JWT Key não configurada"); // configurar no appsettings.Development.json (local)
 
