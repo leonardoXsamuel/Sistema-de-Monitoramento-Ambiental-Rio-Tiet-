@@ -1,6 +1,5 @@
 ﻿namespace ApsMartChat.Profiles;
 
-using ApsMartChat.DTOs;
 using ApsMartChat.DTOs.FileTransfer;
 using ApsMartChat.Models;
 using AutoMapper;
