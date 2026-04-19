@@ -9,7 +9,7 @@ Release/
 *.suo
 
 *.log
-
+appsettings.Development.json
 
 .DS_Store
 Thumbs.db
