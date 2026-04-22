@@ -1,4 +1,5 @@
 using ApsMartChat.Data;
+using ApsMartChat.Exceptions.Handlers;
 using ApsMartChat.Services.Auth;
 using ApsMartChat.Services.File;
 using ApsMartChat.Services.Message;
@@ -17,6 +18,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Mappers
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// Registro de ExceptionHandler
+app.UseMiddleware<ExceptionHandler>();
 
 //   JWT   
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -93,6 +97,9 @@ app.UseAuthorization();
 
 // Servir arquivos estáticos enviados (pasta uploads/)
 app.UseStaticFiles();
+
+// Registro de ExceptionHandler
+app.UseMiddleware<ExceptionHandler>();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
