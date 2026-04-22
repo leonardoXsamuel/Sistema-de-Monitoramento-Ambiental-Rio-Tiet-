@@ -1,6 +1,7 @@
 
 using ApsMartChat.Data;
 using ApsMartChat.DTOs.Auth;
+using ApsMartChat.Exceptions;
 using ApsMartChat.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,7 +26,7 @@ public class AuthService : IAuthService
     {
         // Verifica se username já existe
         if (await _db.Users.AnyAsync(u => u.Username == req.Username))
-            throw new Exception();
+            throw new UserExistsException($"O usuário {req.Username} já existe!");
 
         var user = new User
         {
@@ -49,10 +50,10 @@ public class AuthService : IAuthService
     public async Task<AuthResponse?> LoginDeUsuarioAsync(LoginRequest req)
     {
         var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.Username == req.Username);
-
-        if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-            throw new Exception("Senha errada."); // => criar exception personalizada para esse case
+            .FirstOrDefaultAsync(u => u.Username == req.Username) ?? throw new NotFoundException($"O usuário {req.Username} não foi localizado!");
+        
+        if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+            throw new WrongPasswordException("A senha digitada está incorreta."); 
 
         return new AuthResponse(
             GenerateToken(user),
@@ -65,6 +66,9 @@ public class AuthService : IAuthService
     //  Gera JWT com infos do usuário 
     private string GenerateToken(User user)
     {
+        if (user is null)
+            throw new NotFoundException($"User não pode ser NULL.");
+
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
