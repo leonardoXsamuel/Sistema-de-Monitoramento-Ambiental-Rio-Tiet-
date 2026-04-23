@@ -1,6 +1,7 @@
 using ApsMartChat.Data;
 using ApsMartChat.DTOs;
 using ApsMartChat.DTOs.FileTransfer;
+using ApsMartChat.Exceptions;
 using ApsMartChat.Models;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -46,7 +47,7 @@ public class FileService : IFileService
     private static async Task<bool> ValidarBytesIniciaisAsync(IFormFile file, string ext)
     {
         if (!MagicBytes.TryGetValue(ext, out var assinatura))
-            return false;
+            throw new InvalidTypeFileException();
 
         // lê só os primeiros bytes, sem carregar o arquivo inteiro
         var buffer = new byte[assinatura.Length];
@@ -54,7 +55,7 @@ public class FileService : IFileService
         var lidos = await stream.ReadAsync(buffer, 0, buffer.Length);
 
         if (lidos < assinatura.Length)
-            return false;
+            throw new InvalidTypeFileException();
 
         return buffer.SequenceEqual(assinatura);
     }
@@ -62,14 +63,14 @@ public class FileService : IFileService
     public async Task<FileTransferResponseDTO> UploadDeArquivoAsync(IFormFile file, string username, int roomId, string baseUrl)
     {
         if (file.Length > TamanhoMaxArqBytes)
-            throw new InvalidOperationException("Arquivo excede 200 MB.");
+            throw new InvalidTypeFileException("Arquivo excede 200 MB.");
 
         var ext = Path.GetExtension(file.FileName);
         if (!ExtensoesArquivosPermitidas.Contains(ext))
-            throw new InvalidOperationException("Tipo de arquivo não permitido. Use .pdf, .docx ou .xlsx.");
+            throw new InvalidTypeFileException("Tipo de arquivo não permitido. Use .pdf, .docx ou .xlsx.");
 
         if (!await ValidarBytesIniciaisAsync(file, ext))
-            throw new InvalidOperationException("O conteúdo do arquivo não corresponde à extensão informada.");
+            throw new InvalidTypeFileException("O conteúdo do arquivo não corresponde à extensão informada.");
 
         // Salva no disco
         var uploadsPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads");
@@ -83,7 +84,7 @@ public class FileService : IFileService
 
         // Salva no banco 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username)
-            ?? throw new Exception("Usuário não localizado.");
+            ?? throw new NotFoundException($"O usuário {username} não foi localizado.");
 
         var transfer = new FileTransfer
         {
@@ -98,9 +99,7 @@ public class FileService : IFileService
         _db.FileTransfers.Add(transfer);
         await _db.SaveChangesAsync();
 
-        var dto = _mapper.Map<FileTransferResponseDTO>(transfer);
-
-        return dto;
+        return _mapper.Map<FileTransferResponseDTO>(transfer);
     }
 
     public async Task<(Stream stream, string contentType, string fileName)> DownloadDeArquivoAsync(int fileId)
@@ -108,12 +107,12 @@ public class FileService : IFileService
         var transfer = await _db.FileTransfers.FindAsync(fileId);
 
         if (transfer is null)
-            throw new Exception(); // criar exceções customizadas => NotFoundException para esse caso
+            throw new NotFoundException();
 
         var path = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", transfer.NomeGeradoCript);
 
         if (!System.IO.File.Exists(path))
-            throw new Exception();
+            throw new NotFoundException("O arquivo não existe no caminho informado.");
 
         var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read); // FileMode.Open pode dar erro e precisa ser tratado => pesquisar formas
         return (stream, transfer.TipoConteudo, transfer.NomeOriginal);
@@ -121,6 +120,11 @@ public class FileService : IFileService
 
     public async Task<List<FileTransferResponseDTO>> GetFilesByRoomAsync(int roomId)
     {
+        var idRoomExist = await _db.ChatRooms.AnyAsync(c => c.Id == roomId);
+
+        if (!idRoomExist)
+            throw new NotFoundException($"Chat Room {roomId} não localizada.");
+
         return await _db.FileTransfers
             .Include(f => f.Uploader)
             .Where(f => f.RoomId == roomId)

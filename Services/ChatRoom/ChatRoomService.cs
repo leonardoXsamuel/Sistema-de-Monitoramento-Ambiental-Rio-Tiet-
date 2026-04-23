@@ -1,5 +1,6 @@
 using ApsMartChat.Data;
 using ApsMartChat.DTOs.ChatRoom;
+using ApsMartChat.Exceptions;
 using ApsMartChat.Services.File;
 using AutoMapper;
 
@@ -18,8 +19,8 @@ public class ChatRoomService : IChatRoomService
 
     public async Task<ChatRoomResponseDTO> AlterarNomeChatRoom(int roomId, ChatRoomUpdateDTO chatRoomUpdateDTO)
     {
-        var chatRoomExist = await _db.ChatRooms.FindAsync(roomId) ?? throw new Exception(); // => criar exceção personalizada para NotFound
-
+        var chatRoomExist = await _db.ChatRooms.FindAsync(roomId) ?? throw new NotFoundException();
+        
         chatRoomExist.Name = chatRoomUpdateDTO.Name;
         await _db.SaveChangesAsync();
 
