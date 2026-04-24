@@ -1,6 +1,7 @@
 using ApsMartChat.Data;
 using ApsMartChat.DTOs;
 using ApsMartChat.DTOs.Message;
+using ApsMartChat.Exceptions;
 using ApsMartChat.Models;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -17,7 +18,7 @@ public class MessageService : IMessageService
 
     public async Task<MessageResponseDTO> SaveMessageAsync(string content, string username, int roomId)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username) ?? throw new Exception();
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
 
         var message = new Models.Message
         {
@@ -35,7 +36,7 @@ public class MessageService : IMessageService
 
     public async Task<List<MessageResponseDTO>> GetHistoryOfMessagesAsync(int roomId, int page = 1, int pageSize = 50)
     {
-        return await _db.Messages
+        var ListMessages = await _db.Messages
             .Include(m => m.Sender)
             .Where(m => m.RoomId == roomId)
             .OrderByDescending(m => m.SentAt)
@@ -43,6 +44,11 @@ public class MessageService : IMessageService
             .Take(pageSize)
             .ProjectTo<MessageResponseDTO>(_mapper.ConfigurationProvider)
             .ToListAsync();
+
+        if (!ListMessages.Any())
+            throw new NotFoundException("Não há histórico de mensagens registrado.");
+
+        return ListMessages;
     }
 
     
