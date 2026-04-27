@@ -1,11 +1,9 @@
-using ApsMartChat.DTOs;
 using ApsMartChat.DTOs.FileTransfer;
 using ApsMartChat.Services.Message;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
-namespace EnviroChat.API.Hubs;
+namespace ApsMartChat.Hubs;
 
 [Authorize]
 public class ChatHub : Hub
@@ -22,7 +20,6 @@ public class ChatHub : Hub
     // padroniza o nome do grupo
     private static string RoomGroup(int roomId) => $"room_{roomId}";
 
-    //  Entrar em uma sala 
     public async Task EntrarNoChatRoom(int roomId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(roomId));
@@ -30,7 +27,6 @@ public class ChatHub : Hub
             .SendAsync("UsuarioEntrou", $"Usuario{Context.User?.Identity?.Name ?? "Anônimo"} entrou na sala {roomId}");
     }
 
-    //  Sair de uma sala 
     public async Task SairDoChatRoom(int roomId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, RoomGroup(roomId));
