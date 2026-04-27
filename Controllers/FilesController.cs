@@ -46,7 +46,7 @@ public class FilesController : ControllerBase
 
             return File(stream, TipoConteudo, fileName);
         }
-        catch (NotFoundException e)
+        catch (NotFoundException)
         {
             return NotFound(new { message = "Arquivo não encontrado." });
         }
