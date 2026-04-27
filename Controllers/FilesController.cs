@@ -1,4 +1,5 @@
-﻿using ApsMartChat.Services.File;
+﻿using ApsMartChat.Exceptions;
+using ApsMartChat.Services.File;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -45,7 +46,7 @@ public class FilesController : ControllerBase
 
             return File(stream, TipoConteudo, fileName);
         }
-        catch (Exception)
+        catch (NotFoundException e)
         {
             return NotFound(new { message = "Arquivo não encontrado." });
         }
@@ -59,4 +60,3 @@ public class FilesController : ControllerBase
         return Ok(files);
     }
 }
-
