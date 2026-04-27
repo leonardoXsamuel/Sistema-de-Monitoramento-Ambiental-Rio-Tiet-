@@ -1,9 +1,9 @@
 using ApsMartChat.Data;
 using ApsMartChat.Exceptions.Handlers;
+using ApsMartChat.Hubs;
 using ApsMartChat.Services.Auth;
 using ApsMartChat.Services.File;
 using ApsMartChat.Services.Message;
-using EnviroChat.API.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
