@@ -19,8 +19,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Mappers
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Registro de ExceptionHandler
-app.UseMiddleware<ExceptionHandler>();
 
 //   JWT   
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -76,6 +74,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Registro de ExceptionHandler
+app.UseMiddleware<ExceptionHandler>();
 
 //   Migrations automáticas na inicialização            
 using (var scope = app.Services.CreateScope())
