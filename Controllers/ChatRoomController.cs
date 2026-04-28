@@ -1,9 +1,11 @@
 ﻿using ApsMartChat.DTOs.ChatRoom;
-using ApsMartChat.Services.File;
+using ApsMartChat.Services.ChatRoom;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApsMartChat.Controllers;
 
+[ApiController]
+[Route("api/[controller]")]
 public class ChatRoomController : ControllerBase
 {
     private readonly IChatRoomService _service;
@@ -21,6 +23,14 @@ public class ChatRoomController : ControllerBase
         return Ok(dto);
     }
 
+    [HttpPost("createChatRoom")]
+    public async Task<ActionResult<ChatRoomResponseDTO>> CriarChatRoom([FromBody] ChatRoomCreateDTO CreateDTO)
+    {
+        var dto = await _service.CriarChatRoomAsync(CreateDTO);
 
+        if (dto is null)
+            return BadRequest();
 
+        return Ok(dto);
+    }
 }

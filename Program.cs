@@ -2,6 +2,7 @@ using ApsMartChat.Data;
 using ApsMartChat.Exceptions.Handlers;
 using ApsMartChat.Hubs;
 using ApsMartChat.Services.Auth;
+using ApsMartChat.Services.ChatRoom;
 using ApsMartChat.Services.File;
 using ApsMartChat.Services.Message;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -58,6 +59,15 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 
 //   SignalR  
 builder.Services.AddSignalR();
+
+// ajuste para UserRole não vir como int
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter()
+        );
+    });
 
 //   CORS (libera React dev server)               
 builder.Services.AddCors(options =>

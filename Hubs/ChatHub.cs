@@ -1,4 +1,6 @@
+using ApsMartChat.DTOs.ChatRoom;
 using ApsMartChat.DTOs.FileTransfer;
+using ApsMartChat.Services.ChatRoom;
 using ApsMartChat.Services.Message;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -9,6 +11,7 @@ namespace ApsMartChat.Hubs;
 public class ChatHub : Hub
 {
     private readonly IMessageService _messageService;
+    private readonly IChatRoomService _chatRoomService;
     private readonly ILogger<ChatHub> _logger;
 
     public ChatHub(IMessageService messageService, ILogger<ChatHub> logger)
@@ -19,6 +22,14 @@ public class ChatHub : Hub
 
     // padroniza o nome do grupo
     private static string RoomGroup(int roomId) => $"room_{roomId}";
+
+    // cria sala (chatroom)
+    public async Task CriarChatRoom(ChatRoomCreateDTO dto)
+    {
+        var room = await _chatRoomService.CriarChatRoomAsync(dto);
+
+        await Clients.Caller.SendAsync("SalaCriada", room);
+    }
 
     public async Task EntrarNoChatRoom(int roomId)
     {

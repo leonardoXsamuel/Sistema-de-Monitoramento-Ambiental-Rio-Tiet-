@@ -1,7 +1,8 @@
 using ApsMartChat.Data;
 using ApsMartChat.DTOs.ChatRoom;
 using ApsMartChat.Exceptions;
-using ApsMartChat.Services.File;
+using ApsMartChat.Models;
+using ApsMartChat.Services.ChatRoom;
 using AutoMapper;
 
 public class ChatRoomService : IChatRoomService
@@ -17,13 +18,27 @@ public class ChatRoomService : IChatRoomService
         _mapper = mapper;
     }
 
+    public async Task<ChatRoomResponseDTO> CriarChatRoomAsync(ChatRoomCreateDTO dto)
+    {
+        var room = new ChatRoom
+        {
+            Name = dto.Name
+        };
+
+        _db.ChatRooms.Add(room);
+        await _db.SaveChangesAsync();
+
+        return _mapper.Map<ChatRoomResponseDTO>(room);
+    }
+
     public async Task<ChatRoomResponseDTO> AlterarNomeChatRoom(int roomId, ChatRoomUpdateDTO chatRoomUpdateDTO)
     {
         var chatRoomExist = await _db.ChatRooms.FindAsync(roomId) ?? throw new NotFoundException();
-        
+
         chatRoomExist.Name = chatRoomUpdateDTO.Name;
         await _db.SaveChangesAsync();
 
         return _mapper.Map<ChatRoomResponseDTO>(chatRoomExist);
     }
+
 }
