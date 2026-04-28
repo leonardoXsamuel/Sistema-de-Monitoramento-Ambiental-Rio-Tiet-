@@ -10,7 +10,7 @@ namespace ApsMartChat.Controllers;
 [Route("api/files")]
 public class FilesController : ControllerBase
 {
-    private readonly FileService _files;
+    private readonly IFileService _files;
 
     public FilesController(FileService files) => _files = files;
 
@@ -19,37 +19,24 @@ public class FilesController : ControllerBase
     [RequestSizeLimit(209_715_200)] // 200 MB
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] int roomId)
     {
-        try
-        {
-            var username = User.Identity?.Name ?? "Anonimo";
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var dto = await _files.UploadDeArquivoAsync(file, username, roomId, baseUrl);
-            return Ok(dto);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var username = User.Identity?.Name ?? "Anonimo";
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var dto = await _files.UploadDeArquivoAsync(file, username, roomId, baseUrl);
+
+        return Ok(dto);
     }
 
     // Download de um arquivo pelo ID.
     [HttpGet("{id:int}/download")]
     public async Task<IActionResult> Download(int id)
     {
-        try
-        {
-            var result = await _files.DownloadDeArquivoAsync(id);
+        var result = await _files.DownloadDeArquivoAsync(id);
 
-            var stream = result.stream;
-            var TipoConteudo = result.contentType;
-            var fileName = result.fileName;
+        var stream = result.stream;
+        var TipoConteudo = result.contentType;
+        var fileName = result.fileName;
 
-            return File(stream, TipoConteudo, fileName);
-        }
-        catch (NotFoundException)
-        {
-            return NotFound(new { message = "Arquivo não encontrado." });
-        }
+        return File(stream, TipoConteudo, fileName);
     }
 
     // Lista arquivos de uma sala.
