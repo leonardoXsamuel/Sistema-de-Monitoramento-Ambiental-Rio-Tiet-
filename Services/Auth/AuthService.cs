@@ -3,6 +3,7 @@ using ApsMartChat.Data;
 using ApsMartChat.DTOs.Auth;
 using ApsMartChat.Exceptions;
 using ApsMartChat.Models;
+using ApsMartChat.Models.Enum;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -28,12 +29,14 @@ public class AuthService : IAuthService
         if (await _db.Users.AnyAsync(u => u.Username == req.Username))
             throw new UserExistsException($"O usuário {req.Username} já existe!");
 
+        var role = Enum.TryParse<UserRole>(req.Role, true, out var parsed) ? parsed : UserRole.Inspetor;
+
         var user = new User
         {
             Username = req.Username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password), // linha em que a senha é criptografada
             DisplayName = req.DisplayName,
-            Role = req.Role
+            Role = role
         };
 
         _db.Users.Add(user);
@@ -51,9 +54,9 @@ public class AuthService : IAuthService
     {
         var user = await _db.Users
             .FirstOrDefaultAsync(u => u.Username == req.Username) ?? throw new NotFoundException($"O usuário {req.Username} não foi localizado!");
-        
+
         if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-            throw new WrongPasswordException("A senha digitada está incorreta."); 
+            throw new WrongPasswordException("A senha digitada está incorreta.");
 
         return new AuthResponse(
             GenerateToken(user),

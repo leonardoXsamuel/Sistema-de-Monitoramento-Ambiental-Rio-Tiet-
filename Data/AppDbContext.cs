@@ -21,6 +21,10 @@ public class AppDbContext : DbContext
             e.HasIndex(u => u.Username).IsUnique();
             e.Property(u => u.Username).HasMaxLength(50).IsRequired();
             e.Property(u => u.PasswordHash).IsRequired();
+
+            e.Property(u => u.Role)
+             .HasConversion<string>()
+             .IsRequired();
         });
 
         // ChatRoom

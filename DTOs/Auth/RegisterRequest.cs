@@ -18,6 +18,7 @@ public record RegisterRequest(
     [StringLength(55, MinimumLength = 6)]
     string DisplayName,
 
-    [EnumDataType(typeof(UserRole))]
-    UserRole Role
+    [Required]
+    [StringLength(12, MinimumLength = 8, ErrorMessage = "UserRole deve ser Inspetor ou Coordenador")]
+    string Role
 );
