@@ -11,10 +11,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Banco de dados SQLite 
+// Banco de dados SQL SERVER 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=envirochat.db"));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Mappers
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -23,7 +23,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //   JWT   
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey))
-    throw new Exception("JWT Key não configurada"); // configurar no appsettings.Development.json (local)
+    throw new Exception("JWT Key não configurada"); // configurada no secrets
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -74,9 +74,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-// Registro de ExceptionHandler
-app.UseMiddleware<ExceptionHandler>();
 
 //   Migrations automáticas na inicialização            
 using (var scope = app.Services.CreateScope())
